@@ -2,7 +2,10 @@
 # lokalnej wygenerujemy requirements.lock przez `pip freeze`.
 # Powod: pinowanie wersji "z glowy" konczy sie bledem "no matching distribution".
 
-# --- serwer ---
+# --- interfejs demo (Streamlit Community Cloud) ---
+streamlit>=1.40
+
+# --- warstwa API (uruchamiana lokalnie / z Dockerfile) ---
 fastapi>=0.115
 uvicorn[standard]>=0.32
 
