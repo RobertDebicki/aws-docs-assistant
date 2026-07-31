@@ -1,0 +1,21 @@
+# === SEKRETY — najwazniejsza linijka w tym pliku ===
+.env
+.env.local
+*.key
+
+# === Python ===
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# === Dane i indeks wektorowy ===
+# PDF-y i indeks FAISS sa budowane skryptem — nie zasmiecamy nimi repo.
+data/pdfs/
+index/
+*.faiss
+*.pkl
+
+# === System ===
+.DS_Store
