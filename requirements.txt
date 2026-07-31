@@ -17,6 +17,7 @@ langchain-community>=0.3
 langchain-google-genai>=2.0
 faiss-cpu>=1.9
 pypdf>=5.1
+requests>=2.32
 
 # --- konfiguracja i obserwowalnosc ---
 python-dotenv>=1.0

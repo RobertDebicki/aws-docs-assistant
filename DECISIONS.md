@@ -119,6 +119,43 @@ project.
 
 ---
 
+## 6. The index is built offline and committed to the repository
+
+**Chosen:** `ingest.py` runs locally and by hand; the resulting FAISS index is committed.
+
+**Rejected:** building the index when the application starts.
+
+The free Gemini tier allows **100 embedding requests per minute**, and each chunk is one request.
+Building the index at startup would mean the app spends around eight minutes and several hundred API
+calls every time Streamlit wakes from sleep — while the user watches a spinner.
+
+Committing the index (a few MB) makes startup instant and costs nothing at runtime. `ingest.py`
+downloads the source PDFs itself, so anyone cloning the repo can rebuild it with one command.
+
+**Trade-off accepted:** the index goes stale when AWS updates the documentation, and refreshing it is
+a manual step. For a static reference corpus that is the right trade; for documentation that changed
+daily it would not be, and the rebuild would belong in a scheduled job.
+
+---
+
+## 7. The 1002-page framework document was left out
+
+The corpus is Security Pillar plus Cost Optimization Pillar — 928 chunks. The main Well-Architected
+Framework PDF (1002 pages, 2257 chunks) was dropped after the first ingest run failed with
+`429 RESOURCE_EXHAUSTED`.
+
+Including it would push index construction past 30 minutes against the 100-per-minute limit, and any
+network hiccup in that window would restart the whole run. Two pillars are a coherent, self-contained
+subject area and are enough to demonstrate retrieval quality.
+
+The ingest loop now processes chunks in batches of 90 with a pause between them, **saving the index
+after each batch** — so an interruption costs one batch rather than the entire run.
+
+**What I would change with a paid tier:** raise the batch size, drop the pauses, and index the full
+framework plus all six pillars.
+
+---
+
 ## Open questions
 
 - Chunk size and overlap are not yet tuned. Current values are a starting point, not a measured
