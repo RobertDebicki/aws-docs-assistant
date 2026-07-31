@@ -12,12 +12,14 @@ __pycache__/
 venv/
 *.egg-info/
 
-# === Dane i indeks wektorowy ===
-# PDF-y i indeks FAISS sa budowane skryptem — nie zasmiecamy nimi repo.
+# === Dane zrodlowe ===
+# PDF-y (kilkanascie MB) pobiera skrypt ingest.py — nie trzymamy ich w repo.
 data/pdfs/
-index/
-*.faiss
-*.pkl
+
+# UWAGA: katalog `index/` NIE jest ignorowany, i to celowo.
+# Zbudowany indeks FAISS (kilka MB) jest commitowany, bo aplikacja w chmurze
+# ma go tylko odczytac. Gdyby go tam nie bylo, kazdy start Streamlita oznaczalby
+# ~8 minut przeliczania i setki zapytan do API na darmowym limicie.
 
 # === System ===
 .DS_Store
