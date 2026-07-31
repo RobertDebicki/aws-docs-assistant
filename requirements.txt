@@ -1,0 +1,20 @@
+# Wersje celowo nie sa przypiete na sztywno — po pierwszej udanej instalacji
+# lokalnej wygenerujemy requirements.lock przez `pip freeze`.
+# Powod: pinowanie wersji "z glowy" konczy sie bledem "no matching distribution".
+
+# --- serwer ---
+fastapi>=0.115
+uvicorn[standard]>=0.32
+
+# --- RAG (uzywane od dnia 2, instalowane juz teraz) ---
+# Instalujemy komplet w dniu 1 celowo: chcemy sprawdzic, czy ciezkie zaleznosci
+# (faiss-cpu) w ogole zbuduja sie na Hugging Face, zanim napiszemy logike.
+langchain>=0.3
+langchain-community>=0.3
+langchain-google-genai>=2.0
+faiss-cpu>=1.9
+pypdf>=5.1
+
+# --- konfiguracja i obserwowalnosc ---
+python-dotenv>=1.0
+langfuse>=2.53
