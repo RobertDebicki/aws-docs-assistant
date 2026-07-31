@@ -1,58 +1,35 @@
 """
-AWS Docs Assistant — RAG chatbot na dokumentacji AWS Well-Architected.
+AWS Docs Assistant — warstwa API (FastAPI).
 
-DZIEŃ 1: celowo minimalna wersja. Jedyne zadanie tego pliku dzisiaj to
-udowodnić, że deploy na Hugging Face Spaces działa. Logika RAG wchodzi w dniu 2.
+Interfejsem demo jest `streamlit_app.py` (hostowany na Streamlit Community Cloud).
+Ten plik wystawia te sama logike jako HTTP API — do integracji i uruchomienia
+lokalnego / z Dockerfile. Oba interfejsy czytaja konfiguracje z `config.py`
+i beda korzystac z tego samego modulu RAG, bez duplikowania logiki.
+
+DZIEN 1: celowo minimalna wersja — sam healthcheck.
 """
 
-import os
-
-from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
-# Wczytuje .env przy starcie — dziala tylko lokalnie.
-# Na Hugging Face Spaces pliku .env nie ma; tam zmienne wstrzykiwane sa
-# przez panel Settings -> Secrets. load_dotenv() po prostu nic wtedy nie znajduje.
-load_dotenv()
+from config import stan_konfiguracji
 
 app = FastAPI(
     title="AWS Docs Assistant",
-    description="RAG chatbot odpowiadajacy na pytania o AWS Well-Architected Framework",
+    description="RAG API odpowiadajace na pytania o AWS Well-Architected Framework",
     version="0.1.0",
 )
 
 
-#: Fragmenty wystepujace w .env.example. Jesli klucz je zawiera, to znaczy,
-#: ze ktos skopiowal szablon i zapomnial podmienic wartosc.
-PLACEHOLDER_MARKERY = ("tu-wklej", "xxxx", "zmien-mnie")
-
-
-def klucz_ustawiony(nazwa: str) -> bool:
-    """Czy zmienna srodowiskowa zawiera PRAWDZIWY klucz?
-
-    Samo `bool(os.getenv(...))` nie wystarcza: placeholder ze skopiowanego
-    .env.example to niepusty string, wiec przechodzi jako True i healthcheck
-    klamie, ze konfiguracja jest kompletna. Odrzucamy wiec wartosci puste
-    i takie, ktore wygladaja na nietkniety szablon.
-    """
-    wartosc = (os.getenv(nazwa) or "").strip()
-    if not wartosc:
-        return False
-    return not any(marker in wartosc.lower() for marker in PLACEHOLDER_MARKERY)
-
-
 @app.get("/health")
 def health():
-    """Healthcheck — sprawdza tez, czy zmienne srodowiskowe doszly na serwer.
+    """Healthcheck — potwierdza, ze aplikacja wstala i ma komplet kluczy.
 
-    Zwraca WYLACZNIE informacje czy klucz jest ustawiony (True/False),
-    nigdy jego wartosc. Logowanie sekretow to najczestszy wyciek w takich projektach.
+    Zwraca WYLACZNIE informacje, czy klucz jest ustawiony (True/False),
+    nigdy jego wartosc. Endpoint diagnostyczny wypluwajacy sekrety to
+    najczestszy wyciek w tego typu projektach.
     """
-    konfiguracja = {
-        "gemini_key_present": klucz_ustawiony("GOOGLE_API_KEY"),
-        "langfuse_key_present": klucz_ustawiony("LANGFUSE_PUBLIC_KEY"),
-    }
+    konfiguracja = stan_konfiguracji()
     return {
         "status": "ok" if all(konfiguracja.values()) else "missing_config",
         "stage": "dzien-1-szkielet",
@@ -66,6 +43,7 @@ def root():
         {
             "name": "AWS Docs Assistant",
             "status": "W budowie — dzien 1: szkielet i deploy.",
+            "demo": "Interfejs uzytkownika: streamlit_app.py",
             "endpoints": {"health": "/health", "docs": "/docs"},
         }
     )

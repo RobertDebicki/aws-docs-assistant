@@ -1,13 +1,3 @@
----
-title: AWS Docs Assistant
-emoji: ☁️
-colorFrom: indigo
-colorTo: blue
-sdk: docker
-app_port: 7860
-pinned: false
----
-
 # AWS Docs Assistant
 
 A RAG chatbot that answers questions about the **AWS Well-Architected Framework** and cites the exact
@@ -54,15 +44,31 @@ user question ─────────────────► retrieval (
 
 | Layer | Choice |
 |---|---|
+| Demo UI | Streamlit |
 | API | FastAPI |
 | LLM | Google Gemini Flash |
 | Embeddings | Gemini embeddings |
 | Vector store | FAISS (local, on-disk) |
 | Observability | LangFuse |
-| Hosting | Hugging Face Spaces (Docker) |
+| Hosting | Streamlit Community Cloud |
 
 Every choice here was constrained by one hard requirement: **zero hosting cost, no credit card.**
-The reasoning — and what was rejected — is written up in [DECISIONS.md](DECISIONS.md).
+That constraint is also why the deployment target changed mid-build — Hugging Face Spaces turned out
+to require a paid plan for Docker Spaces, which surfaced on day 1 rather than on day 6. The
+reasoning, and what was rejected, is in [DECISIONS.md](DECISIONS.md).
+
+## Layout
+
+The retrieval logic is deliberately independent of any interface:
+
+| File | Role |
+|---|---|
+| `config.py` | Key loading — `.env` locally, `st.secrets` in the cloud |
+| `streamlit_app.py` | Demo interface (this is what gets deployed) |
+| `app.py` | The same logic as an HTTP API |
+| `Dockerfile` | Local/portable run of the API |
+
+Swapping the interface — or the host — does not touch the retrieval code.
 
 ## Running locally
 
@@ -72,11 +78,21 @@ source .venv/bin/activate
 pip install -r requirements.txt
 
 cp .env.example .env          # then paste your real keys into .env
+```
+
+Demo interface:
+
+```bash
+streamlit run streamlit_app.py
+```
+
+Or the API instead:
+
+```bash
 uvicorn app:app --reload --port 8000
 ```
 
-Open http://localhost:8000/health — it reports whether your keys were loaded, without ever printing
-their values.
+Both report whether your keys were loaded, without ever printing their values.
 
 ## AI assistance disclosure
 

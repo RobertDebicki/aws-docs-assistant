@@ -44,21 +44,54 @@ the wrong one past roughly a million vectors.
 
 ---
 
-## 3. Hugging Face Spaces instead of AWS Lambda
+## 3. Streamlit Community Cloud — after Hugging Face Spaces failed at deploy time
 
-**Chosen:** Hugging Face Spaces, Docker SDK, CPU Basic.
+**Chosen:** Streamlit Community Cloud.
 
-**Rejected:** AWS Lambda + API Gateway, Render, Railway.
+**Rejected:** Hugging Face Spaces (original plan), AWS Lambda + API Gateway, Render.
 
-Lambda would have been the more on-brand choice. Two things ruled it out for a one-week build: the
-dependency bundle (LangChain plus FAISS) pushes against Lambda's package size limits and needs
-layers to work around, and the account still needs a card even inside the free tier. Spaces gives
-2 vCPU and 16 GB RAM for free with a Dockerfile I control.
+Lambda was ruled out early: the dependency bundle (LangChain plus FAISS) pushes against Lambda's
+package size limits and needs layers to work around, and the account needs a card even inside the
+free tier.
 
-**Trade-off accepted:** free Spaces **sleep after 48 hours of inactivity** and take roughly 30
-seconds to wake. For a portfolio link that a recruiter might open at any time, that is a real
-problem — a cold link reads as a broken link. Mitigated with a scheduled GitHub Actions workflow
-that pings the Space once a day, which keeps it warm at no cost.
+Hugging Face Spaces was the original choice — 2 vCPU and 16 GB RAM, free, with a Dockerfile I
+control. **It failed at deploy time.** Creating the Space returned `402 Payment Required`:
+
+> Static Spaces are free for everyone, but hosting Gradio and Docker Spaces on free cpu-basic
+> requires a PRO subscription.
+
+The free tier now covers static Spaces only. Python backends need a paid plan, which breaks the
+zero-cost constraint this project is built on.
+
+Render was the closest alternative and needs no card, but its free web services sleep after 15
+minutes and take roughly 50 seconds to wake. A portfolio link that hangs for a minute reads as a
+broken link, so that trade was worse than Streamlit's.
+
+**Trade-off accepted:** Streamlit Community Cloud allows 3 apps, caps memory at 1 GB and sleeps
+after 12 quiet hours. The 1 GB cap is the constraint that matters — it is the reason embeddings are
+computed through the Gemini API rather than by running a local sentence-transformers model, which
+would not fit alongside the index.
+
+**Why this is written down:** the deployment target changed *because deploying on day 1 exposed the
+problem while there were still six days left*. Had the deploy been left until the end, this would
+have surfaced with finished code and no time to react. This is the strongest argument for shipping
+an empty skeleton first.
+
+---
+
+## 3b. The RAG logic is separate from the interface
+
+Moving to Streamlit forced a decision that improved the design: **the retrieval logic lives in its
+own module and knows nothing about the UI.**
+
+- `config.py` — reads keys from `.env` locally and from `st.secrets` in the cloud
+- `streamlit_app.py` — the demo interface, deployed publicly
+- `app.py` — the same logic exposed as a FastAPI HTTP API, for integration and local use
+
+The `Dockerfile` is kept and still works for running the API locally. It is no longer the deployment
+path.
+
+The point is that swapping the interface — or the host, again — does not touch the retrieval code.
 
 ---
 

@@ -2,6 +2,8 @@
 .env
 .env.local
 *.key
+# Lokalne sekrety Streamlita — na Streamlit Cloud ustawiane w panelu, nie w repo.
+.streamlit/secrets.toml
 
 # === Python ===
 __pycache__/
